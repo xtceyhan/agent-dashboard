@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="tr" data-theme="hacker">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self';"
+    />
+    <title>agent-dashboard</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <!-- tarama çizgisi / grid arka plan katmanları -->
+    <div class="fx-grid" aria-hidden="true"></div>
+    <div class="fx-scanlines" aria-hidden="true"></div>
+
+    <!-- SAHTE TERMİNAL ÇUBUĞU -->
+    <div class="termbar">
+      <span class="dot dot-r"></span>
+      <span class="dot dot-y"></span>
+      <span class="dot dot-g"></span>
+      <span class="termbar-title">root@agent-teams:~/live$ ./watch --status</span>
+    </div>
+
+    <!-- ÜST BİLGİ -->
+    <header class="header">
+      <div class="header-left">
+        <span class="prompt-caret">&gt;</span>
+        <span class="header-label">proje:</span>
+        <span id="project-name" class="header-project">—</span>
+      </div>
+      <div class="header-right">
+        <div class="timer">
+          <span class="timer-key">uptime</span>
+          <span id="timer" class="timer-value">—</span>
+          <span class="blink">_</span>
+        </div>
+        <button id="btn-sessions" class="sessions-btn" title="Aktif oturumlar">
+          <span id="sessions-dot" class="sessions-dot"></span>
+          <span id="sessions-count" class="sessions-count">0</span>
+          <span class="sessions-label">oturum</span>
+        </button>
+        <button id="btn-theme" class="icon-btn" title="Tema değiştir">◐</button>
+        <button id="btn-settings" class="icon-btn" title="Ayarlar">⚙</button>
+      </div>
+    </header>
+
+    <!-- AYARLAR ŞERİDİ -->
+    <section id="settings-panel" class="settings-panel hidden">
+      <div class="settings-row">
+        <span class="settings-label">status.json:</span>
+        <code id="status-path" class="settings-path">seçilmedi</code>
+      </div>
+      <div class="settings-actions">
+        <button id="btn-choose" class="btn">Değiştir…</button>
+        <button id="btn-reload" class="btn btn-ghost">Yeniden Yükle</button>
+      </div>
+    </section>
+
+    <!-- HATA / BİLGİ ŞERİDİ -->
+    <div id="banner" class="banner hidden"></div>
+
+    <!-- ANA GÖRÜNÜM: ORGANİZASYON ŞEMASI -->
+    <main class="chart">
+      <div class="node user-node">
+        <div class="avatar" title="Kullanıcı">🧑‍💻</div>
+        <div class="node-caption">KULLANICI</div>
+      </div>
+
+      <div class="connector"></div>
+
+      <div id="manager-slot" class="manager-slot"></div>
+
+      <div class="connector connector-fan"></div>
+
+      <div id="agents-grid" class="agents-grid"></div>
+    </main>
+
+    <footer class="footer">
+      <span class="footer-stats" id="footer-stats"></span>
+      <span id="last-updated">—</span>
+    </footer>
+
+    <!-- OTURUM KEŞİF PANELİ (soldan) -->
+    <div id="sessions-overlay" class="overlay hidden"></div>
+    <aside id="sessions-panel" class="sessions-panel-drawer hidden" aria-hidden="true">
+      <div class="detail-head">
+        <div>
+          <div class="detail-name">Oturumlar</div>
+          <div id="sessions-sub" class="detail-role">otomatik keşif</div>
+        </div>
+        <button id="sessions-close" class="icon-btn" title="Kapat">✕</button>
+      </div>
+      <div class="sessions-hint">
+        Claude Code transkriptlerinden bulundu. Son
+        <span id="sessions-window">60</span> sn'de yazılan oturum
+        <b>aktif</b> sayılır.
+      </div>
+      <div id="sessions-list" class="sessions-list"></div>
+      <div id="sessions-dir" class="sessions-dir"></div>
+    </aside>
+
+    <!-- DETAY / LOG PANELİ -->
+    <div id="overlay" class="overlay hidden"></div>
+    <aside id="detail" class="detail hidden" aria-hidden="true">
+      <div class="detail-head">
+        <div>
+          <div id="detail-name" class="detail-name">—</div>
+          <div id="detail-role" class="detail-role"></div>
+        </div>
+        <button id="detail-close" class="icon-btn" title="Kapat">✕</button>
+      </div>
+
+      <div class="detail-badge-row">
+        <span id="detail-badge" class="badge"><span class="badge-dot"></span><span id="detail-state-label"></span></span>
+      </div>
+
+      <div class="detail-section">
+        <div class="detail-section-title">// GÖREV</div>
+        <div id="detail-task" class="detail-task">—</div>
+      </div>
+
+      <div class="detail-section detail-log-section">
+        <div class="detail-section-title">// LOG</div>
+        <div id="detail-log" class="detail-log"></div>
+      </div>
+    </aside>
+
+    <script src="renderer.js"></script>
+  </body>
+</html>

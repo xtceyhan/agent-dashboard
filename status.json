@@ -1,0 +1,63 @@
+{
+  "project_name": "masraf_takip",
+  "started_at": "2026-07-22T09:15:00",
+  "updated_at": "2026-07-22T11:29:33",
+  "agents": [
+    {
+      "name": "Müdür",
+      "role": "manager",
+      "task": "Görevleri dağıtıyor ve ilerlemeyi denetliyor",
+      "state": "working",
+      "logs": [
+        { "time": "2026-07-22T09:15:04", "message": "Ekip kuruldu, görevler dağıtıldı" },
+        { "time": "2026-07-22T10:02:11", "message": "Backend'e API görevleri verildi" },
+        { "time": "2026-07-22T11:20:00", "message": "Test Agent takıldı — inceleniyor" }
+      ]
+    },
+    {
+      "name": "Backend Agent",
+      "task": "REST API uç noktalarını yazıyor (Express)",
+      "state": "working",
+      "logs": [
+        { "time": "2026-07-22T09:40:00", "message": "GET /expenses eklendi" },
+        { "time": "2026-07-22T10:55:12", "message": "POST /expenses eklendi" },
+        { "time": "2026-07-22T11:15:44", "message": "Auth middleware yazılıyor" }
+      ]
+    },
+    {
+      "name": "Frontend Agent",
+      "task": "Masraf listesi ekranını tasarlıyor",
+      "state": "waiting",
+      "logs": [
+        { "time": "2026-07-22T09:20:00", "message": "Backend endpoint'lerini bekliyor" }
+      ]
+    },
+    {
+      "name": "DB Agent",
+      "task": "Şema migrasyonlarını tamamladı",
+      "state": "done",
+      "logs": [
+        { "time": "2026-07-22T09:30:00", "message": "expenses tablosu oluşturuldu" },
+        { "time": "2026-07-22T09:58:00", "message": "users tablosu + indeksler tamam" },
+        { "time": "2026-07-22T10:10:00", "message": "Migrasyonlar tamamlandı ✔" }
+      ]
+    },
+    {
+      "name": "Test Agent",
+      "task": "Auth testinde takıldı — token süresi hatası",
+      "state": "stuck",
+      "logs": [
+        { "time": "2026-07-22T11:05:00", "message": "auth.test.js çalıştırıldı" },
+        { "time": "2026-07-22T11:18:20", "message": "HATA: JWT expired — token süresi 0 geliyor" }
+      ]
+    },
+    {
+      "name": "Docs Agent",
+      "task": "README taslağını hazırlıyor",
+      "state": "working",
+      "logs": [
+        { "time": "2026-07-22T11:00:00", "message": "Kurulum bölümü yazıldı" }
+      ]
+    }
+  ]
+}
