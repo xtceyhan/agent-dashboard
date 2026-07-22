@@ -491,6 +491,8 @@ body {
   transform: translateY(-2px);
   border-color: var(--border-strong);
 }
+.card.static { cursor: default; }
+.card.static:hover { transform: none; }
 .card-head {
   display: flex;
   align-items: center;
@@ -594,8 +596,12 @@ body {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--c);
+  background: var(--text-muted);
 }
+.footer-stats .fs.s-working::before { background: var(--state-working); }
+.footer-stats .fs.s-waiting::before { background: var(--state-waiting); }
+.footer-stats .fs.s-done::before { background: var(--state-done); }
+.footer-stats .fs.s-stuck::before { background: var(--state-stuck); }
 
 /* ---------- DETAY PANELİ ---------- */
 .overlay {

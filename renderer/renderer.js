@@ -186,17 +186,8 @@ function renderStats(agents) {
     ['done', counts.done, 'bitti'],
     ['stuck', counts.stuck, 'takıldı'],
   ];
-  const colorVar = {
-    working: 'var(--state-working)',
-    waiting: 'var(--state-waiting)',
-    done: 'var(--state-done)',
-    stuck: 'var(--state-stuck)',
-  };
   el.footerStats.innerHTML = items
-    .map(
-      ([k, n, label]) =>
-        `<span class="fs" style="--c:${colorVar[k]}">${n} ${label}</span>`
-    )
+    .map(([k, n, label]) => `<span class="fs s-${k}">${n} ${label}</span>`)
     .join('');
 }
 
@@ -217,8 +208,7 @@ function render(data) {
     el.managerSlot.appendChild(createCard(manager, managerIdx, { isManager: true }));
   } else {
     const placeholder = document.createElement('div');
-    placeholder.className = 'card manager-card state-waiting';
-    placeholder.style.cursor = 'default';
+    placeholder.className = 'card manager-card state-waiting static';
     placeholder.innerHTML =
       '<div class="card-head"><div><div class="card-name">Müdür</div>' +
       '<div class="card-role">Müdür</div></div></div>' +
