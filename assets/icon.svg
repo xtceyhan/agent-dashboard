@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <!-- zemin -->
+  <rect x="6" y="6" width="244" height="244" rx="56" fill="#0a0f18"/>
+  <rect x="6" y="6" width="244" height="244" rx="56" fill="none" stroke="#12405c" stroke-width="4"/>
+
+  <!-- ince grid dokusu (hacker hissi) -->
+  <g stroke="#12405c" stroke-width="1.5" opacity="0.28">
+    <path d="M6 86 H250"/>
+    <path d="M6 170 H250"/>
+    <path d="M86 6 V250"/>
+    <path d="M170 6 V250"/>
+  </g>
+
+  <!-- bağlantı çizgileri -->
+  <g stroke="#22d3ee" stroke-width="9" stroke-linecap="round" fill="none">
+    <path d="M128 96 V126"/>
+    <path d="M82 126 H174"/>
+    <path d="M82 126 V152"/>
+    <path d="M174 126 V152"/>
+  </g>
+
+  <!-- düğüm parıltıları (glow) -->
+  <circle cx="128" cy="76" r="36" fill="#22d3ee" opacity="0.20"/>
+  <circle cx="82" cy="176" r="32" fill="#22ff88" opacity="0.20"/>
+  <circle cx="174" cy="176" r="32" fill="#ffd400" opacity="0.20"/>
+
+  <!-- düğümler: üstte müdür (cyan), altta agent'lar -->
+  <circle cx="128" cy="76" r="22" fill="#0a0f18" stroke="#22d3ee" stroke-width="8"/>
+  <circle cx="82" cy="176" r="20" fill="#22ff88"/>
+  <circle cx="174" cy="176" r="20" fill="#ffd400"/>
+
+  <!-- müdür düğümünün içinde terminal chevron -->
+  <path d="M120 68 L131 76 L120 84" fill="none" stroke="#22d3ee" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

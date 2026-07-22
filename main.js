@@ -113,8 +113,9 @@ function createWindow() {
     height: 800,
     minWidth: 720,
     minHeight: 560,
-    backgroundColor: '#f4f6fb',
+    backgroundColor: '#05080d',
     title: 'Agent Dashboard',
+    icon: path.join(__dirname, 'assets', 'icon.ico'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,

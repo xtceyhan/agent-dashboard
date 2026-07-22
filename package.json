@@ -1,6 +1,6 @@
 {
   "name": "agent-dashboard",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Claude Code Agent Teams için canlı organizasyon şeması dashboard'u",
   "main": "main.js",
   "author": "Tuğrul Ceyhan",
@@ -8,12 +8,15 @@
   "scripts": {
     "start": "electron .",
     "simulate": "node tools/simulate.js",
+    "icon": "node tools/make-icon.js",
     "dist": "electron-builder --win",
     "pack": "electron-builder --dir"
   },
   "devDependencies": {
+    "@resvg/resvg-js": "^2.6.2",
     "electron": "^33.0.0",
-    "electron-builder": "^25.1.8"
+    "electron-builder": "^25.1.8",
+    "png-to-ico": "^3.0.2"
   },
   "build": {
     "appId": "com.tugrul.agentdashboard",
@@ -26,10 +29,13 @@
       "assets/**/*"
     ],
     "win": {
+      "icon": "assets/icon.ico",
       "target": [
         {
           "target": "nsis",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
         }
       ]
     },
