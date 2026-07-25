@@ -171,6 +171,55 @@ node tools/status-writer.js status.json rm  "Backend"
 > İpucu: Claude Code hook'larından (örn. bir agent görev alınca/bitirince)
 > bu CLI'yı çağırarak `status.json`'ı otomatik güncelleyebilirsin.
 
+## Çoklu cihaz izleme (Tailscale) — tabletten de açılır
+
+Tailscale ağındaki birkaç bilgisayarı **tek ekrandan** izlemek için iki küçük,
+bağımlılıksız Node servisi eklendi. Elektron gerekmez; sonuç sade bir web
+sayfası olduğu için **tablet/telefon tarayıcısından da** açılır.
+
+**1) İzlenecek her bilgisayarda** (Claude Code'un çalıştığı makine), kendi
+`status.json`'ını tailnet'e yayınlayan servisi başlat:
+
+```bash
+node tools/status-server.js C:\proj\status.json 4317
+```
+
+Varsayılan olarak yalnızca o makinenin **Tailscale IP**'sine bağlanır
+(`tailscale ip -4` ile otomatik bulunur) — yani sadece aynı tailnet'teki
+cihazlar erişebilir, LAN'a ya da internete açılmaz.
+
+**2) Merkezi (senin izlediğin) makinede** `devices.json`'a cihazları tanımla:
+
+```json
+[
+  { "name": "Ofis PC", "host": "ofis-pc.tailxxxx.ts.net", "port": 4317 },
+  { "name": "Laptop",  "host": "laptop.tailxxxx.ts.net",  "port": 4317 }
+]
+```
+
+(`host` alanına Tailscale MagicDNS adı ya da `100.x.x.x` tailnet IP'si yazılır.)
+
+Sonra toplayıcıyı başlat:
+
+```bash
+node tools/dashboard-server.js devices.json 4300
+```
+
+**3) Tabletten** (ya da herhangi bir cihazdan) tailnet üzerinden şu adresi aç:
+
+```
+http://<merkezi-makinenin-tailscale-ip>:4300
+```
+
+Cihaz kutucuklarına dokunarak o cihazdaki agent'ları ve durumlarını
+görebilirsin; sayfa **5 saniyede bir** kendini tazeler. Bir cihaza
+ulaşılamıyorsa kutucuk çevrimdışı görünür, uygulamayı durdurmaz.
+
+> Güvenlik notu: Ekstra kullanıcı adı/şifre katmanı yok — güvenlik tamamen
+> Tailscale'in özel ağına dayanıyor (tailnet'te olmayan biri isteği
+> gönderemez). Halka açık bir ağa (Tailscale Funnel vb.) bağlamadığın sürece
+> bu yeterlidir.
+
 ## Windows için .exe / kurulum paketi üretme
 
 [electron-builder](https://www.electron.build/) kullanılır.

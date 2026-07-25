@@ -8,6 +8,8 @@
   "scripts": {
     "start": "electron .",
     "simulate": "node tools/simulate.js",
+    "status-server": "node tools/status-server.js",
+    "dashboard-server": "node tools/dashboard-server.js",
     "icon": "node tools/make-icon.js",
     "dist": "electron-builder --win",
     "pack": "electron-builder --dir"

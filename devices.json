@@ -1,0 +1,4 @@
+[
+  { "name": "Ofis PC", "host": "ofis-pc.tailxxxx.ts.net", "port": 4317 },
+  { "name": "Laptop", "host": "laptop.tailxxxx.ts.net", "port": 4317 }
+]
