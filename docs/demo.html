@@ -1,0 +1,1354 @@
+<!DOCTYPE html>
+<html lang="tr" data-theme="hacker">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+    <title>agent-dashboard</title>
+    <style>/* ============================================================
+   Agent Dashboard — "hacker terminal" tema
+   Koyu neon (varsayılan) + açık tema (data-theme="light")
+   ============================================================ */
+
+/* ---------- HACKER (koyu) tema — varsayılan ---------- */
+:root,
+[data-theme="hacker"] {
+  --bg: #05080d;
+  --bg-2: #070b12;
+  --surface: #0b111b;
+  --surface-2: #0e1521;
+  --border: #17324a;
+  --border-strong: #1e4664;
+  --line: #1b3a54;
+
+  --text: #cfe8ff;
+  --text-muted: #5f7d97;
+  --accent: #22d3ee; /* cyan */
+
+  --state-working: #ffd400; /* sarı */
+  --state-waiting: #6b8299; /* gri-cyan */
+  --state-done: #22ff88;    /* neon yeşil */
+  --state-stuck: #ff2e63;   /* neon kırmızı */
+
+  --state-working-soft: rgba(255, 212, 0, 0.12);
+  --state-waiting-soft: rgba(107, 130, 153, 0.14);
+  --state-done-soft: rgba(34, 255, 136, 0.12);
+  --state-stuck-soft: rgba(255, 46, 99, 0.12);
+
+  --glow: 0.55; /* glow yoğunluğu (0-1) */
+  --grid-alpha: 0.05;
+  --scan-alpha: 0.05;
+  --font-mono: "JetBrains Mono", "Cascadia Code", "Fira Code", "Consolas",
+    monospace;
+}
+
+/* ---------- AÇIK tema ---------- */
+[data-theme="light"] {
+  --bg: #f4f6fb;
+  --bg-2: #eef1f7;
+  --surface: #ffffff;
+  --surface-2: #f7f9fc;
+  --border: #e2e6ef;
+  --border-strong: #ccd2e0;
+  --line: #c3cad8;
+
+  --text: #1f2430;
+  --text-muted: #6b7280;
+  --accent: #0e7490;
+
+  --state-working: #eab308;
+  --state-waiting: #9ca3af;
+  --state-done: #16a34a;
+  --state-stuck: #ef4444;
+
+  --state-working-soft: #fef6da;
+  --state-waiting-soft: #f1f2f5;
+  --state-done-soft: #e4f8ea;
+  --state-stuck-soft: #fdeaea;
+
+  --glow: 0;
+  --grid-alpha: 0;
+  --scan-alpha: 0;
+  --font-mono: "JetBrains Mono", "Cascadia Code", "Consolas", monospace;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-mono);
+  background: var(--bg);
+  color: var(--text);
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
+
+/* ---------- ARKA PLAN EFEKTLERİ ---------- */
+.fx-grid,
+.fx-scanlines {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+.fx-grid {
+  background-image: linear-gradient(
+      rgba(34, 211, 238, var(--grid-alpha)) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      90deg,
+      rgba(34, 211, 238, var(--grid-alpha)) 1px,
+      transparent 1px
+    );
+  background-size: 34px 34px;
+}
+.fx-scanlines {
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, var(--scan-alpha)) 0px,
+    rgba(255, 255, 255, var(--scan-alpha)) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+}
+
+/* içeriği efekt katmanlarının üstüne al */
+.termbar,
+.header,
+.settings-panel,
+.banner,
+.chart,
+.footer,
+.detail,
+.overlay {
+  position: relative;
+  z-index: 1;
+}
+
+/* ---------- TERMİNAL ÇUBUĞU ---------- */
+.termbar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background: var(--bg-2);
+  border-bottom: 1px solid var(--border);
+}
+.dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  display: inline-block;
+}
+.dot-r { background: #ff5f56; }
+.dot-y { background: #ffbd2e; }
+.dot-g { background: #27c93f; }
+.termbar-title {
+  margin-left: 10px;
+  font-size: 12px;
+  color: var(--text-muted);
+  letter-spacing: 0.3px;
+}
+
+/* ---------- ÜST BİLGİ ---------- */
+.header {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 22px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+.header-left {
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+}
+.prompt-caret {
+  color: var(--accent);
+  font-weight: 700;
+  text-shadow: 0 0 calc(8px * var(--glow)) var(--accent);
+}
+.header-label {
+  color: var(--text-muted);
+  font-size: 14px;
+}
+.header-project {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--accent);
+  text-shadow: 0 0 calc(10px * var(--glow)) var(--accent);
+  letter-spacing: 0.5px;
+}
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.timer {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-2);
+}
+.timer-key {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+.timer-value {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  font-size: 16px;
+  letter-spacing: 0.5px;
+  color: var(--state-done);
+  text-shadow: 0 0 calc(9px * var(--glow)) var(--state-done);
+}
+.blink {
+  color: var(--state-done);
+  animation: blink 1s step-end infinite;
+}
+@keyframes blink {
+  50% { opacity: 0; }
+}
+.icon-btn {
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  border-radius: 6px;
+  width: 36px;
+  height: 36px;
+  font-size: 17px;
+  cursor: pointer;
+  color: var(--accent);
+  line-height: 1;
+}
+.icon-btn:hover {
+  border-color: var(--accent);
+  box-shadow: 0 0 calc(10px * var(--glow)) rgba(34, 211, 238, 0.5);
+}
+
+/* ---------- OTURUM GÖSTERGESİ (header) ---------- */
+.sessions-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  border-radius: 6px;
+  height: 36px;
+  padding: 0 12px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  cursor: pointer;
+}
+.sessions-btn:hover {
+  border-color: var(--accent);
+  box-shadow: 0 0 calc(10px * var(--glow)) rgba(34, 211, 238, 0.4);
+}
+.sessions-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--state-waiting);
+}
+.sessions-dot.live {
+  background: var(--state-done);
+  box-shadow: 0 0 calc(9px * var(--glow)) var(--state-done);
+  animation: pulse 1.1s ease-in-out infinite;
+}
+.sessions-count { font-weight: 700; }
+.sessions-label { color: var(--text-muted); }
+
+/* ---------- OTURUM PANELİ (soldan kayan) ---------- */
+.sessions-panel-drawer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 440px;
+  max-width: 94vw;
+  height: 100vh;
+  background: var(--surface);
+  border-right: 1px solid var(--border-strong);
+  box-shadow: 8px 0 calc(30px * var(--glow)) rgba(34, 211, 238, 0.15);
+  z-index: 21;
+  display: flex;
+  flex-direction: column;
+  padding: 18px 20px;
+  gap: 12px;
+  transform: translateX(0);
+  transition: transform 0.18s ease;
+}
+.sessions-panel-drawer.hidden {
+  display: flex !important;
+  transform: translateX(-105%);
+}
+.sessions-hint {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+.sessions-hint b { color: var(--state-done); }
+.sessions-list {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.sess {
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--line);
+  border-radius: 8px;
+  padding: 11px 13px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  background: var(--surface-2);
+}
+.sess.live { border-left-color: var(--state-done); }
+.sess-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.sess-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--state-waiting);
+  flex: 0 0 auto;
+}
+.sess.live .sess-dot {
+  background: var(--state-done);
+  box-shadow: 0 0 calc(8px * var(--glow)) var(--state-done);
+  animation: pulse 1.1s ease-in-out infinite;
+}
+.sess-proj {
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--text);
+}
+.sess-age {
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.sess.live .sess-age { color: var(--state-done); }
+.sess-cwd {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  word-break: break-all;
+}
+.sess-meta {
+  display: flex;
+  gap: 12px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.sess-meta .k { color: var(--accent); }
+.sessions-dir {
+  font-size: 11px;
+  color: var(--text-muted);
+  border-top: 1px solid var(--border);
+  padding-top: 10px;
+  word-break: break-all;
+}
+
+/* ---------- AYARLAR ŞERİDİ ---------- */
+.settings-panel {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 22px;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+.settings-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.settings-label {
+  color: var(--text-muted);
+  font-size: 13px;
+  white-space: nowrap;
+}
+.settings-path {
+  font-size: 13px;
+  color: var(--accent);
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 4px 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 58vw;
+}
+.settings-actions { display: flex; gap: 8px; }
+.btn {
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  color: var(--text);
+  border-radius: 6px;
+  padding: 7px 14px;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: var(--font-mono);
+}
+.btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.btn-ghost { color: var(--text-muted); }
+
+/* ---------- BANNER ---------- */
+.banner {
+  flex: 0 0 auto;
+  padding: 10px 22px;
+  background: var(--state-stuck-soft);
+  color: var(--state-stuck);
+  border-bottom: 1px solid var(--state-stuck);
+  font-size: 14px;
+}
+
+/* ---------- ORGANİZASYON ŞEMASI ---------- */
+.chart {
+  flex: 1 1 auto;
+  overflow: auto;
+  padding: 28px 22px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.avatar {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  border: 1px solid var(--accent);
+  background: var(--surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 27px;
+  box-shadow: 0 0 calc(16px * var(--glow)) rgba(34, 211, 238, 0.4);
+}
+.node-caption {
+  font-size: 12px;
+  color: var(--text-muted);
+  letter-spacing: 1px;
+}
+.connector {
+  width: 2px;
+  height: 26px;
+  background: var(--line);
+  box-shadow: 0 0 calc(6px * var(--glow)) var(--accent);
+}
+.connector-fan { height: 22px; }
+
+.manager-slot { display: flex; justify-content: center; }
+.manager-card { min-width: 280px; max-width: 380px; }
+
+.agents-grid {
+  width: 100%;
+  max-width: 1040px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 16px;
+  padding-bottom: 24px;
+}
+
+/* ---------- KART ---------- */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--line);
+  border-radius: 8px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  cursor: pointer;
+  transition: transform 0.08s ease, border-color 0.15s ease;
+}
+.card:hover {
+  transform: translateY(-2px);
+  border-color: var(--border-strong);
+}
+.card.static { cursor: default; }
+.card.static:hover { transform: none; }
+.card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.card-name {
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 0.3px;
+}
+.card-role {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--accent);
+}
+.card-task {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.45;
+  min-height: 1.45em;
+}
+.card-foot {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.card-foot .chevron { margin-left: auto; color: var(--accent); }
+
+/* ---------- ROZET ---------- */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.badge-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+/* ---------- DURUM VARYANTLARI ---------- */
+.state-working { border-left-color: var(--state-working); }
+.state-working .badge { background: var(--state-working-soft); color: var(--state-working); }
+.state-working .badge-dot {
+  background: var(--state-working);
+  box-shadow: 0 0 calc(8px * var(--glow)) var(--state-working);
+  animation: pulse 1.1s ease-in-out infinite;
+}
+
+.state-waiting { border-left-color: var(--state-waiting); }
+.state-waiting .badge { background: var(--state-waiting-soft); color: var(--state-waiting); }
+.state-waiting .badge-dot { background: var(--state-waiting); }
+
+.state-done { border-left-color: var(--state-done); }
+.state-done .badge { background: var(--state-done-soft); color: var(--state-done); }
+.state-done .badge-dot {
+  background: var(--state-done);
+  box-shadow: 0 0 calc(8px * var(--glow)) var(--state-done);
+}
+
+.state-stuck { border-left-color: var(--state-stuck); }
+.state-stuck .badge { background: var(--state-stuck-soft); color: var(--state-stuck); }
+.state-stuck .badge-dot {
+  background: var(--state-stuck);
+  box-shadow: 0 0 calc(8px * var(--glow)) var(--state-stuck);
+  animation: pulse 0.7s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+/* ---------- FOOTER ---------- */
+.footer {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 22px;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-muted);
+  font-size: 12px;
+}
+.footer-stats { display: flex; gap: 14px; }
+.footer-stats .fs { display: inline-flex; align-items: center; gap: 5px; }
+.footer-stats .fs::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--text-muted);
+}
+.footer-stats .fs.s-working::before { background: var(--state-working); }
+.footer-stats .fs.s-waiting::before { background: var(--state-waiting); }
+.footer-stats .fs.s-done::before { background: var(--state-done); }
+.footer-stats .fs.s-stuck::before { background: var(--state-stuck); }
+
+/* ---------- DETAY PANELİ ---------- */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  z-index: 20;
+}
+.detail {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 420px;
+  max-width: 92vw;
+  height: 100vh;
+  background: var(--surface);
+  border-left: 1px solid var(--border-strong);
+  box-shadow: -8px 0 calc(30px * var(--glow)) rgba(34, 211, 238, 0.15);
+  z-index: 21;
+  display: flex;
+  flex-direction: column;
+  padding: 18px 20px;
+  gap: 14px;
+  transform: translateX(0);
+  transition: transform 0.18s ease;
+}
+.detail.hidden { transform: translateX(105%); }
+.detail-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+.detail-name {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--accent);
+  text-shadow: 0 0 calc(10px * var(--glow)) var(--accent);
+}
+.detail-role {
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+.detail-badge-row .badge { font-size: 12px; padding: 4px 12px; }
+.detail-section {
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+}
+.detail-section-title {
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+.detail-task {
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--text);
+}
+.detail-log-section {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.detail-log {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-size: 12.5px;
+  line-height: 1.6;
+}
+.log-line {
+  display: flex;
+  gap: 8px;
+  padding: 2px 0;
+}
+.log-time {
+  color: var(--accent);
+  white-space: nowrap;
+  opacity: 0.85;
+}
+.log-msg { color: var(--text); word-break: break-word; }
+.log-empty { color: var(--text-muted); font-style: italic; }
+
+/* ---------- yardımcılar ---------- */
+.hidden { display: none !important; }
+.detail.hidden { display: flex !important; } /* slide-out için görünür kalır */
+
+.empty-hint {
+  color: var(--text-muted);
+  font-size: 14px;
+  padding: 20px;
+  text-align: center;
+  grid-column: 1 / -1;
+}
+
+/* ince scrollbar (koyu tema) */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: var(--bg-2); }
+::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 6px;
+}
+::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+</style>
+  </head>
+  <body>
+    <!-- tarama çizgisi / grid arka plan katmanları -->
+    <div class="fx-grid" aria-hidden="true"></div>
+    <div class="fx-scanlines" aria-hidden="true"></div>
+
+    <!-- SAHTE TERMİNAL ÇUBUĞU -->
+    <div class="termbar">
+      <span class="dot dot-r"></span>
+      <span class="dot dot-y"></span>
+      <span class="dot dot-g"></span>
+      <span class="termbar-title">root@agent-teams:~/live$ ./watch --status</span>
+    </div>
+
+    <!-- ÜST BİLGİ -->
+    <header class="header">
+      <div class="header-left">
+        <span class="prompt-caret">&gt;</span>
+        <span class="header-label">proje:</span>
+        <span id="project-name" class="header-project">—</span>
+      </div>
+      <div class="header-right">
+        <div class="timer">
+          <span class="timer-key">uptime</span>
+          <span id="timer" class="timer-value">—</span>
+          <span class="blink">_</span>
+        </div>
+        <button id="btn-sessions" class="sessions-btn" title="Aktif oturumlar">
+          <span id="sessions-dot" class="sessions-dot"></span>
+          <span id="sessions-count" class="sessions-count">0</span>
+          <span class="sessions-label">oturum</span>
+        </button>
+        <button id="btn-theme" class="icon-btn" title="Tema değiştir">◐</button>
+        <button id="btn-settings" class="icon-btn" title="Ayarlar">⚙</button>
+      </div>
+    </header>
+
+    <!-- AYARLAR ŞERİDİ -->
+    <section id="settings-panel" class="settings-panel hidden">
+      <div class="settings-row">
+        <span class="settings-label">status.json:</span>
+        <code id="status-path" class="settings-path">seçilmedi</code>
+      </div>
+      <div class="settings-actions">
+        <button id="btn-choose" class="btn">Değiştir…</button>
+        <button id="btn-reload" class="btn btn-ghost">Yeniden Yükle</button>
+      </div>
+    </section>
+
+    <!-- HATA / BİLGİ ŞERİDİ -->
+    <div id="banner" class="banner hidden"></div>
+
+    <!-- ANA GÖRÜNÜM: ORGANİZASYON ŞEMASI -->
+    <main class="chart">
+      <div class="node user-node">
+        <div class="avatar" title="Kullanıcı">🧑‍💻</div>
+        <div class="node-caption">KULLANICI</div>
+      </div>
+
+      <div class="connector"></div>
+
+      <div id="manager-slot" class="manager-slot"></div>
+
+      <div class="connector connector-fan"></div>
+
+      <div id="agents-grid" class="agents-grid"></div>
+    </main>
+
+    <footer class="footer">
+      <span class="footer-stats" id="footer-stats"></span>
+      <span id="last-updated">—</span>
+    </footer>
+
+    <!-- OTURUM KEŞİF PANELİ (soldan) -->
+    <div id="sessions-overlay" class="overlay hidden"></div>
+    <aside id="sessions-panel" class="sessions-panel-drawer hidden" aria-hidden="true">
+      <div class="detail-head">
+        <div>
+          <div class="detail-name">Oturumlar</div>
+          <div id="sessions-sub" class="detail-role">otomatik keşif</div>
+        </div>
+        <button id="sessions-close" class="icon-btn" title="Kapat">✕</button>
+      </div>
+      <div class="sessions-hint">
+        Claude Code transkriptlerinden bulundu. Son
+        <span id="sessions-window">60</span> sn'de yazılan oturum
+        <b>aktif</b> sayılır.
+      </div>
+      <div id="sessions-list" class="sessions-list"></div>
+      <div id="sessions-dir" class="sessions-dir"></div>
+    </aside>
+
+    <!-- DETAY / LOG PANELİ -->
+    <div id="overlay" class="overlay hidden"></div>
+    <aside id="detail" class="detail hidden" aria-hidden="true">
+      <div class="detail-head">
+        <div>
+          <div id="detail-name" class="detail-name">—</div>
+          <div id="detail-role" class="detail-role"></div>
+        </div>
+        <button id="detail-close" class="icon-btn" title="Kapat">✕</button>
+      </div>
+
+      <div class="detail-badge-row">
+        <span id="detail-badge" class="badge"><span class="badge-dot"></span><span id="detail-state-label"></span></span>
+      </div>
+
+      <div class="detail-section">
+        <div class="detail-section-title">// GÖREV</div>
+        <div id="detail-task" class="detail-task">—</div>
+      </div>
+
+      <div class="detail-section detail-log-section">
+        <div class="detail-section-title">// LOG</div>
+        <div id="detail-log" class="detail-log"></div>
+      </div>
+    </aside>
+
+    <script>
+(() => {
+  const status = {"project_name":"masraf_takip","started_at":"2026-07-22T09:15:00","updated_at":"2026-07-22T11:29:33","agents":[{"name":"Müdür","role":"manager","task":"Görevleri dağıtıyor ve ilerlemeyi denetliyor","state":"working","logs":[{"time":"2026-07-22T09:15:04","message":"Ekip kuruldu, görevler dağıtıldı"},{"time":"2026-07-22T10:02:11","message":"Backend'e API görevleri verildi"},{"time":"2026-07-22T11:20:00","message":"Test Agent takıldı — inceleniyor"}]},{"name":"Backend Agent","task":"REST API uç noktalarını yazıyor (Express)","state":"working","logs":[{"time":"2026-07-22T09:40:00","message":"GET /expenses eklendi"},{"time":"2026-07-22T10:55:12","message":"POST /expenses eklendi"},{"time":"2026-07-22T11:15:44","message":"Auth middleware yazılıyor"}]},{"name":"Frontend Agent","task":"Masraf listesi ekranını tasarlıyor","state":"waiting","logs":[{"time":"2026-07-22T09:20:00","message":"Backend endpoint'lerini bekliyor"}]},{"name":"DB Agent","task":"Şema migrasyonlarını tamamladı","state":"done","logs":[{"time":"2026-07-22T09:30:00","message":"expenses tablosu oluşturuldu"},{"time":"2026-07-22T09:58:00","message":"users tablosu + indeksler tamam"},{"time":"2026-07-22T10:10:00","message":"Migrasyonlar tamamlandı ✔"}]},{"name":"Test Agent","task":"Auth testinde takıldı — token süresi hatası","state":"stuck","logs":[{"time":"2026-07-22T11:05:00","message":"auth.test.js çalıştırıldı"},{"time":"2026-07-22T11:18:20","message":"HATA: JWT expired — token süresi 0 geliyor"}]},{"name":"Docs Agent","task":"README taslağını hazırlıyor","state":"working","logs":[{"time":"2026-07-22T11:00:00","message":"Kurulum bölümü yazıldı"}]}]};
+  const TASKS = {
+    'Backend Agent': ['REST API uç noktalarını yazıyor', 'Auth middleware ekliyor', 'Hata yakalamayı düzenliyor'],
+    'Frontend Agent': ['Masraf listesi ekranını tasarlıyor', 'State yönetimini kuruyor', 'Form doğrulamasını ekliyor'],
+    'DB Agent': ['Şema migrasyonlarını yazıyor', 'İndeksleri optimize ediyor', 'Seed verisi ekliyor'],
+    'Test Agent': ['Birim testleri yazıyor', 'E2E senaryolarını kuruyor', 'Coverage raporu üretiyor'],
+    'Docs Agent': ['README taslağı hazırlıyor', 'API dokümanını yazıyor', 'Changelog düzenliyor'],
+  };
+  const STATES = ['working', 'waiting', 'done', 'stuck'];
+  const pick = (a) => a[Math.floor(Math.random() * a.length)];
+  const iso = () => new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 19);
+  status.started_at = iso();
+  setInterval(() => {
+    const workers = status.agents.filter((a) => a.role !== 'manager' && TASKS[a.name]);
+    if (!workers.length) return;
+    const a = pick(workers);
+    a.state = pick(STATES);
+    a.task = pick(TASKS[a.name]);
+    a.logs.push({ time: iso(), message: '[' + a.state + '] ' + a.task });
+    status.updated_at = iso();
+  }, 2500);
+  const cfg = { statusPath: 'demo/status.json (simülasyon)' };
+  window.api = {
+    readStatus: async () => ({ ok: true, data: status, path: cfg.statusPath }),
+    getConfig: async () => cfg,
+    chooseStatusFile: async () => ({ changed: false, statusPath: cfg.statusPath }),
+    listSessions: async () => ({ ok: true, sessions: [], activeCount: 1 }),
+    onConfigChanged: () => {},
+    onForceRefresh: () => {},
+  };
+})();
+</script>
+<script>'use strict';
+
+/* ============================================================
+   Renderer — status.json'ı okur, org şemasını çizer,
+   sayacı akıtır, tema + detay/log panelini yönetir.
+   ============================================================ */
+
+const POLL_MS = 2000; // status.json 2 saniyede bir yeniden okunur.
+
+const el = {
+  root: document.documentElement,
+  projectName: document.getElementById('project-name'),
+  timer: document.getElementById('timer'),
+  managerSlot: document.getElementById('manager-slot'),
+  agentsGrid: document.getElementById('agents-grid'),
+  banner: document.getElementById('banner'),
+  lastUpdated: document.getElementById('last-updated'),
+  footerStats: document.getElementById('footer-stats'),
+  statusPath: document.getElementById('status-path'),
+  settingsPanel: document.getElementById('settings-panel'),
+  btnSettings: document.getElementById('btn-settings'),
+  btnTheme: document.getElementById('btn-theme'),
+  btnChoose: document.getElementById('btn-choose'),
+  btnReload: document.getElementById('btn-reload'),
+  // detay paneli
+  overlay: document.getElementById('overlay'),
+  detail: document.getElementById('detail'),
+  detailName: document.getElementById('detail-name'),
+  detailRole: document.getElementById('detail-role'),
+  detailBadge: document.getElementById('detail-badge'),
+  detailStateLabel: document.getElementById('detail-state-label'),
+  detailTask: document.getElementById('detail-task'),
+  detailLog: document.getElementById('detail-log'),
+  detailClose: document.getElementById('detail-close'),
+  // oturum keşfi
+  btnSessions: document.getElementById('btn-sessions'),
+  sessionsDot: document.getElementById('sessions-dot'),
+  sessionsCount: document.getElementById('sessions-count'),
+  sessionsOverlay: document.getElementById('sessions-overlay'),
+  sessionsPanel: document.getElementById('sessions-panel'),
+  sessionsList: document.getElementById('sessions-list'),
+  sessionsClose: document.getElementById('sessions-close'),
+  sessionsSub: document.getElementById('sessions-sub'),
+  sessionsWindow: document.getElementById('sessions-window'),
+  sessionsDir: document.getElementById('sessions-dir'),
+};
+
+let lastSessions = []; // en son taranan oturumlar (canlı yaş için)
+
+let startedAtMs = null;
+let lastData = null; // en son okunan veri (detay paneli için)
+let openAgentKey = null; // açık olan agent (canlı güncellensin diye)
+
+// ---- Durum normalizasyonu ---------------------------------------------------
+function normalizeState(raw) {
+  const s = String(raw || '').trim().toLowerCase();
+  const map = {
+    working: 'working', çalışıyor: 'working', calisiyor: 'working',
+    running: 'working', active: 'working', busy: 'working', in_progress: 'working',
+    waiting: 'waiting', bekliyor: 'waiting', idle: 'waiting',
+    queued: 'waiting', pending: 'waiting',
+    done: 'done', bitti: 'done', completed: 'done', complete: 'done',
+    finished: 'done', success: 'done',
+    stuck: 'stuck', takıldı: 'stuck', takildi: 'stuck', error: 'stuck',
+    failed: 'stuck', blocked: 'stuck', hata: 'stuck',
+  };
+  return map[s] || 'waiting';
+}
+
+const STATE_LABEL = {
+  working: 'çalışıyor',
+  waiting: 'bekliyor',
+  done: 'bitti',
+  stuck: 'takıldı',
+};
+
+// ---- Süre biçimlendirme -----------------------------------------------------
+function formatElapsed(ms) {
+  if (ms == null || ms < 0 || !isFinite(ms)) return '—';
+  const totalSec = Math.floor(ms / 1000);
+  const days = Math.floor(totalSec / 86400);
+  const hours = Math.floor((totalSec % 86400) / 3600);
+  const mins = Math.floor((totalSec % 3600) / 60);
+  const secs = totalSec % 60;
+  const parts = [];
+  if (days > 0) parts.push(days + 'g');
+  if (days > 0 || hours > 0) parts.push(hours + 's');
+  parts.push(mins + 'dk');
+  parts.push(secs + 'sn');
+  return parts.join(' ');
+}
+
+function tickTimer() {
+  el.timer.textContent = startedAtMs == null ? '—' : formatElapsed(Date.now() - startedAtMs);
+}
+setInterval(tickTimer, 1000);
+
+// ---- Log normalizasyonu -----------------------------------------------------
+// logs: ["metin"] ya da [{time/ts/timestamp, message/msg/text}]
+function normalizeLogs(logs) {
+  if (!Array.isArray(logs)) return [];
+  return logs.map((l) => {
+    if (typeof l === 'string') return { time: '', msg: l };
+    const t = l.time || l.ts || l.timestamp || '';
+    let timeStr = '';
+    if (t) {
+      const d = new Date(t);
+      timeStr = isNaN(d) ? String(t) : d.toLocaleTimeString('tr-TR');
+    }
+    return { time: timeStr, msg: l.message || l.msg || l.text || '' };
+  });
+}
+
+// ---- Kart oluşturma ---------------------------------------------------------
+function agentKey(agent, idx) {
+  return (agent.name || 'agent') + '#' + idx;
+}
+
+function createCard(agent, idx, { isManager = false } = {}) {
+  const state = normalizeState(agent.state);
+  const card = document.createElement('div');
+  card.className = `card state-${state}`;
+  if (isManager) card.classList.add('manager-card');
+
+  const head = document.createElement('div');
+  head.className = 'card-head';
+
+  const nameWrap = document.createElement('div');
+  const name = document.createElement('div');
+  name.className = 'card-name';
+  name.textContent = agent.name || (isManager ? 'Müdür' : 'İsimsiz agent');
+  nameWrap.appendChild(name);
+  if (isManager) {
+    const role = document.createElement('div');
+    role.className = 'card-role';
+    role.textContent = 'Müdür';
+    nameWrap.appendChild(role);
+  }
+  head.appendChild(nameWrap);
+
+  const badge = document.createElement('span');
+  badge.className = 'badge';
+  const dot = document.createElement('span');
+  dot.className = 'badge-dot';
+  badge.appendChild(dot);
+  badge.appendChild(document.createTextNode(STATE_LABEL[state]));
+  head.appendChild(badge);
+
+  const task = document.createElement('div');
+  task.className = 'card-task';
+  task.textContent = agent.task || '—';
+
+  const foot = document.createElement('div');
+  foot.className = 'card-foot';
+  const logs = normalizeLogs(agent.logs);
+  foot.innerHTML =
+    `<span>${logs.length} log</span><span class="chevron">detay ›</span>`;
+
+  card.appendChild(head);
+  card.appendChild(task);
+  card.appendChild(foot);
+
+  const key = agentKey(agent, idx);
+  card.addEventListener('click', () => openDetail(key));
+  return card;
+}
+
+function pickManager(agents) {
+  const idx = agents.findIndex((a) => {
+    const role = String(a.role || '').toLowerCase();
+    const name = String(a.name || '').toLowerCase();
+    return role === 'manager' || /müdür|mudur|manager/.test(name);
+  });
+  if (idx === -1) return { manager: null, managerIdx: -1, rest: agents.map((a, i) => ({ a, i })) };
+  const rest = agents.map((a, i) => ({ a, i })).filter((x) => x.i !== idx);
+  return { manager: agents[idx], managerIdx: idx, rest };
+}
+
+// ---- Footer istatistikleri --------------------------------------------------
+function renderStats(agents) {
+  const counts = { working: 0, waiting: 0, done: 0, stuck: 0 };
+  for (const a of agents) counts[normalizeState(a.state)]++;
+  const items = [
+    ['working', counts.working, 'çalışıyor'],
+    ['waiting', counts.waiting, 'bekliyor'],
+    ['done', counts.done, 'bitti'],
+    ['stuck', counts.stuck, 'takıldı'],
+  ];
+  el.footerStats.innerHTML = items
+    .map(([k, n, label]) => `<span class="fs s-${k}">${n} ${label}</span>`)
+    .join('');
+}
+
+// ---- Ekranı çiz -------------------------------------------------------------
+function render(data) {
+  lastData = data;
+  el.projectName.textContent = data.project_name || '—';
+
+  const parsed = data.started_at ? Date.parse(data.started_at) : NaN;
+  startedAtMs = isNaN(parsed) ? null : parsed;
+  tickTimer();
+
+  const agents = Array.isArray(data.agents) ? data.agents : [];
+  const { manager, managerIdx, rest } = pickManager(agents);
+
+  el.managerSlot.innerHTML = '';
+  if (manager) {
+    el.managerSlot.appendChild(createCard(manager, managerIdx, { isManager: true }));
+  } else {
+    const placeholder = document.createElement('div');
+    placeholder.className = 'card manager-card state-waiting static';
+    placeholder.innerHTML =
+      '<div class="card-head"><div><div class="card-name">Müdür</div>' +
+      '<div class="card-role">Müdür</div></div></div>' +
+      '<div class="card-task">Müdür atanmadı (role: "manager" ekle)</div>';
+    el.managerSlot.appendChild(placeholder);
+  }
+
+  el.agentsGrid.innerHTML = '';
+  if (rest.length === 0) {
+    const hint = document.createElement('div');
+    hint.className = 'empty-hint';
+    hint.textContent = 'Gösterilecek agent yok.';
+    el.agentsGrid.appendChild(hint);
+  } else {
+    for (const { a, i } of rest) el.agentsGrid.appendChild(createCard(a, i));
+  }
+
+  renderStats(agents);
+
+  const upd = data.updated_at ? new Date(data.updated_at) : new Date();
+  el.lastUpdated.textContent =
+    'son güncelleme: ' + (isNaN(upd) ? '—' : upd.toLocaleString('tr-TR'));
+
+  // Açık detay panelini canlı tazele
+  if (openAgentKey) refreshDetail();
+}
+
+// ---- Detay / log paneli -----------------------------------------------------
+function findAgentByKey(key) {
+  if (!lastData || !Array.isArray(lastData.agents)) return null;
+  const idx = lastData.agents.findIndex((a, i) => agentKey(a, i) === key);
+  return idx === -1 ? null : lastData.agents[idx];
+}
+
+function refreshDetail() {
+  const agent = findAgentByKey(openAgentKey);
+  if (!agent) return; // agent kaybolduysa paneli açık bırak, veri değişmesin
+  const state = normalizeState(agent.state);
+
+  el.detailName.textContent = agent.name || 'İsimsiz agent';
+  const isManager =
+    String(agent.role || '').toLowerCase() === 'manager' ||
+    /müdür|mudur|manager/i.test(agent.name || '');
+  el.detailRole.textContent = isManager ? 'MÜDÜR' : 'AGENT';
+
+  el.detailBadge.className = 'badge';
+  el.detail.className = el.detail.className
+    .replace(/state-\w+/g, '')
+    .trim();
+  el.detail.classList.add(`state-${state}`);
+  // rozetin rengi state-* sınıfından geliyor; paneli sarmalayan state-* ekledik
+  el.detailStateLabel.textContent = STATE_LABEL[state];
+
+  el.detailTask.textContent = agent.task || '—';
+
+  const logs = normalizeLogs(agent.logs);
+  if (logs.length === 0) {
+    el.detailLog.innerHTML = '<div class="log-empty">— log kaydı yok —</div>';
+  } else {
+    el.detailLog.innerHTML = logs
+      .map(
+        (l) =>
+          `<div class="log-line">${
+            l.time ? `<span class="log-time">${escapeHtml(l.time)}</span>` : ''
+          }<span class="log-msg">${escapeHtml(l.msg)}</span></div>`
+      )
+      .join('');
+  }
+}
+
+function openDetail(key) {
+  openAgentKey = key;
+  refreshDetail();
+  el.detail.classList.remove('hidden');
+  el.detail.setAttribute('aria-hidden', 'false');
+  el.overlay.classList.remove('hidden');
+}
+
+function closeDetail() {
+  openAgentKey = null;
+  el.detail.classList.add('hidden');
+  el.detail.setAttribute('aria-hidden', 'true');
+  el.overlay.classList.add('hidden');
+}
+
+function escapeHtml(s) {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+// ---- Oturum keşfi -----------------------------------------------------------
+const ACTIVE_WINDOW_SEC = 60;
+
+function formatAge(sec) {
+  if (sec < 60) return sec + ' sn önce';
+  if (sec < 3600) return Math.floor(sec / 60) + ' dk önce';
+  if (sec < 86400) return Math.floor(sec / 3600) + ' sa önce';
+  return Math.floor(sec / 86400) + ' g önce';
+}
+
+// lastActivity (ms) üzerinden "şimdi"ye göre canlı yaş
+function ageSecOf(s) {
+  return Math.max(0, Math.floor((Date.now() - s.lastActivity) / 1000));
+}
+
+function renderSessionsHeader() {
+  const active = lastSessions.filter((s) => ageSecOf(s) <= ACTIVE_WINDOW_SEC);
+  el.sessionsCount.textContent = String(active.length);
+  el.sessionsDot.classList.toggle('live', active.length > 0);
+}
+
+function renderSessionsList() {
+  el.sessionsSub.textContent =
+    lastSessions.length + ' oturum bulundu';
+  if (lastSessions.length === 0) {
+    el.sessionsList.innerHTML =
+      '<div class="log-empty">Hiç oturum bulunamadı.</div>';
+    return;
+  }
+  el.sessionsList.innerHTML = lastSessions
+    .map((s) => {
+      const age = ageSecOf(s);
+      const live = age <= ACTIVE_WINDOW_SEC;
+      return (
+        `<div class="sess${live ? ' live' : ''}">` +
+        `<div class="sess-top">` +
+        `<span class="sess-dot"></span>` +
+        `<span class="sess-proj">${escapeHtml(s.project || '—')}</span>` +
+        `<span class="sess-age">${live ? '🟢 ' : ''}${formatAge(age)}</span>` +
+        `</div>` +
+        (s.cwd ? `<div class="sess-cwd">${escapeHtml(s.cwd)}</div>` : '') +
+        `<div class="sess-meta">` +
+        `<span><span class="k">id</span> ${escapeHtml(s.sessionId.slice(0, 8))}</span>` +
+        (s.gitBranch ? `<span><span class="k">branch</span> ${escapeHtml(s.gitBranch)}</span>` : '') +
+        `<span><span class="k">boyut</span> ${s.sizeKB} KB</span>` +
+        `</div>` +
+        `</div>`
+      );
+    })
+    .join('');
+}
+
+async function refreshSessions() {
+  const res = await window.api.listSessions();
+  if (!res || !res.ok) {
+    lastSessions = [];
+    el.sessionsCount.textContent = '0';
+    el.sessionsDot.classList.remove('live');
+    el.sessionsSub.textContent = 'okunamadı';
+    el.sessionsList.innerHTML =
+      '<div class="log-empty">' +
+      escapeHtml((res && res.error) || '~/.claude/projects okunamadı') +
+      '</div>';
+    return;
+  }
+  lastSessions = res.sessions || [];
+  if (res.activeWindowSec) el.sessionsWindow.textContent = res.activeWindowSec;
+  el.sessionsDir.textContent = res.dir || '';
+  renderSessionsHeader();
+  if (!el.sessionsPanel.classList.contains('hidden')) renderSessionsList();
+}
+
+// yaşları saniyede bir tazele (dosya taraması olmadan akıcı görünsün)
+setInterval(() => {
+  renderSessionsHeader();
+  if (!el.sessionsPanel.classList.contains('hidden')) renderSessionsList();
+}, 1000);
+
+function openSessions() {
+  renderSessionsList();
+  el.sessionsPanel.classList.remove('hidden');
+  el.sessionsPanel.setAttribute('aria-hidden', 'false');
+  el.sessionsOverlay.classList.remove('hidden');
+}
+function closeSessions() {
+  el.sessionsPanel.classList.add('hidden');
+  el.sessionsPanel.setAttribute('aria-hidden', 'true');
+  el.sessionsOverlay.classList.add('hidden');
+}
+
+// ---- Banner ----------------------------------------------------------------
+function showBanner(msg) {
+  el.banner.textContent = msg;
+  el.banner.classList.remove('hidden');
+}
+function hideBanner() {
+  el.banner.classList.add('hidden');
+}
+
+function setPathLabel(p) {
+  el.statusPath.textContent = p || 'seçilmedi';
+  el.statusPath.title = p || '';
+}
+
+// ---- Tema -------------------------------------------------------------------
+function applyTheme(theme) {
+  const t = theme === 'light' ? 'light' : 'hacker';
+  el.root.setAttribute('data-theme', t);
+  try {
+    localStorage.setItem('theme', t);
+  } catch {}
+  el.btnTheme.title = t === 'hacker' ? 'Açık temaya geç' : 'Hacker temasına geç';
+}
+function toggleTheme() {
+  const cur = el.root.getAttribute('data-theme');
+  applyTheme(cur === 'hacker' ? 'light' : 'hacker');
+}
+
+// ---- Yükleme döngüsü --------------------------------------------------------
+async function refresh() {
+  const res = await window.api.readStatus();
+  setPathLabel(res.path);
+  if (res.ok) {
+    hideBanner();
+    render(res.data);
+  } else {
+    showBanner('⚠ ' + res.error);
+  }
+}
+
+// ---- Olaylar ----------------------------------------------------------------
+el.btnSettings.addEventListener('click', () =>
+  el.settingsPanel.classList.toggle('hidden')
+);
+el.btnTheme.addEventListener('click', toggleTheme);
+el.btnChoose.addEventListener('click', async () => {
+  const r = await window.api.chooseStatusFile();
+  setPathLabel(r.statusPath);
+  refresh();
+});
+el.btnReload.addEventListener('click', refresh);
+el.detailClose.addEventListener('click', closeDetail);
+el.overlay.addEventListener('click', closeDetail);
+el.btnSessions.addEventListener('click', openSessions);
+el.sessionsClose.addEventListener('click', closeSessions);
+el.sessionsOverlay.addEventListener('click', closeSessions);
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    closeDetail();
+    closeSessions();
+  }
+});
+
+window.api.onConfigChanged((cfg) => {
+  setPathLabel(cfg.statusPath);
+  refresh();
+});
+window.api.onForceRefresh(() => refresh());
+
+// ---- Başlat -----------------------------------------------------------------
+(async function init() {
+  let saved = 'hacker';
+  try {
+    saved = localStorage.getItem('theme') || 'hacker';
+  } catch {}
+  applyTheme(saved);
+
+  const cfg = await window.api.getConfig();
+  setPathLabel(cfg.statusPath);
+  await refresh();
+  await refreshSessions();
+  setInterval(refresh, POLL_MS);
+  setInterval(refreshSessions, POLL_MS);
+})();
+</script>
+  </body>
+</html>

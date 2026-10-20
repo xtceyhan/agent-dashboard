@@ -4,6 +4,15 @@ Claude Code Agent Teams çalışırken hangi agent'ın ne durumda olduğunu
 **ofis/organizasyon şeması** tarzında, **canlı güncellenen** bir Electron
 masaüstü uygulaması.
 
+## Ekran görüntüleri
+
+![Dashboard](docs/screenshots/dashboard.png)
+
+![Agent detay paneli](docs/screenshots/agent-detail.png)
+
+Tarayıcıda canlı demo: `docs/demo.html` dosyasını açın
+(`node tools/build-web-demo.js` ile yeniden üretilir).
+
 - Üstte hangi proje üzerinde çalışıldığı ve projeye başlanışından bu yana
   akan canlı bir süre sayacı (`2s 14dk 33sn geçti` gibi).
 - Ortada organizasyon şeması: en üstte **Kullanıcı**, altında **Müdür**,
